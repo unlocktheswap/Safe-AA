@@ -7,6 +7,7 @@ import {ISafeProtocolManager} from "@safe-global/safe-core-protocol/contracts/in
 import {SafeTransaction, SafeProtocolAction} from "@safe-global/safe-core-protocol/contracts/DataTypes.sol";
 import {_getFeeCollectorRelayContext, _getFeeTokenRelayContext, _getFeeRelayContext} from "@gelatonetwork/relay-context/contracts/GelatoRelayContext.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {customInterface, PoolKey, IHooks, IPoolManager, TestSettings} from "./interface/customInterface.sol";
 
 address constant NATIVE_TOKEN = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
@@ -92,13 +93,40 @@ contract RelayPlugin is BasePluginWithEventMetadata {
     function executeFromPlugin(ISafeProtocolManager manager, ISafe safe, bytes calldata data) external {
         if (trustedOrigin != address(0) && msg.sender != trustedOrigin) revert UntrustedOrigin(msg.sender);
 
-        //check sender has subscription NFT
-        (address sender) = abi.decode(data,(address));
-        if(subscriptionToken.balanceOf(sender) < 1) revert SenderHasNoValidNFTSubscription(sender, address(subscriptionToken));
+        //check sender has subscription NFT, purchase if applicable
+        (address sender, address nftAddress, bool freeSwap, address v4Hook, address token0, address token1, bool zeroForOne, int256 amountSpecified, uint160 sqrtPriceLimitX96) = 
+            abi.decode(data,(address,address,bool,address,address,address,bool,int256,uint160));
 
-        relayCall(address(safe), data);
-        // We use the hash of the tx to relay has a nonce as this is unique
-        uint256 nonce = uint256(keccak256(abi.encode(this, manager, safe, data)));
-        payFee(manager, safe, nonce);
+        PoolKey memory key = PoolKey({
+            currency0: token0,
+            currency1: token1,
+            fee: 0x80000,
+            tickSpacing: 60,
+            hooks: IHooks(v4Hook)
+        });
+
+        if(freeSwap) {
+            //purchase NFT if opting for freeSwap and do not have one
+            if(IERC721(nftAddress).balanceOf(sender) < 1) {
+                customInterface(nftAddress).purchaseMembership(key, 0.1 ether, sender);
+            }
+            relayCall(address(safe), data);
+            // We use the hash of the tx to relay has a nonce as this is unique
+            uint256 nonce = uint256(keccak256(abi.encode(this, manager, safe, data)));
+            payFee(manager, safe, nonce);
+        }
+        
+        customInterface(v4Hook).swap(
+            key, 
+            IPoolManager.SwapParams({
+                zeroForOne: zeroForOne,
+                amountSpecified: amountSpecified,
+                sqrtPriceLimitX96:sqrtPriceLimitX96
+            }),
+            TestSettings({
+                withdrawTokens: true,
+                settleUsingTransfer: true
+            })
+        );
     }
 }

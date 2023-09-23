@@ -17,7 +17,8 @@ interface customInterface {
 
     function purchaseMembership (
         PoolKey calldata key,
-        uint256 value)
+        uint256 value,
+        address sender)
         external payable returns (uint256 tokenId);
 }
 
