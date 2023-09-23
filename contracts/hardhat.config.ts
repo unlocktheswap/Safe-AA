@@ -40,7 +40,8 @@ const deterministicDeployment = (network: string): DeterministicDeploymentInfo =
   };
 };
 
-
+console.log(NODE_URL);
+console.log(INFURA_KEY);
 if (["goerli", "mumbai"].includes(argv.network) && INFURA_KEY === undefined) {
   throw new Error(`Could not find NODE_URL in env, unable to connect to network ${argv.network}`);
 }
@@ -74,7 +75,7 @@ const config: HardhatUserConfig = {
     },
     mumbai: {
       ...sharedNetworkConfig,
-      url: `https://polygon-mumbai.infura.io/v3/${INFURA_KEY}`,
+      url: `https://polygon-mumbai.g.alchemy.com/v2/uB9m3uqszMuzNfkF2zzljO-_0VtlJneH`,
     },
     gnosis: {
       ...sharedNetworkConfig,
