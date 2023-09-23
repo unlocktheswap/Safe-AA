@@ -6,6 +6,7 @@ import {ISafe} from "@safe-global/safe-core-protocol/contracts/interfaces/Accoun
 import {ISafeProtocolManager} from "@safe-global/safe-core-protocol/contracts/interfaces/Manager.sol";
 import {SafeTransaction, SafeProtocolAction} from "@safe-global/safe-core-protocol/contracts/DataTypes.sol";
 import {_getFeeCollectorRelayContext, _getFeeTokenRelayContext, _getFeeRelayContext} from "@gelatonetwork/relay-context/contracts/GelatoRelayContext.sol";
+import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
 
 address constant NATIVE_TOKEN = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
 
@@ -18,11 +19,14 @@ contract RelayPlugin is BasePluginWithEventMetadata {
     error RelayExecutionFailure(bytes data);
     error InvalidRelayMethod(bytes4 data);
 
+    error SenderHasNoValidNFTSubscription(address sender, address nft);
+
     address public immutable trustedOrigin;
     bytes4 public immutable relayMethod;
 
     // Account => token => maxFee
     mapping(address => mapping(address => uint256)) public maxFeePerToken;
+    IERC721 subscriptionToken;
 
     constructor(
         address _trustedOrigin,
@@ -45,6 +49,10 @@ contract RelayPlugin is BasePluginWithEventMetadata {
     function setMaxFeePerToken(address token, uint256 maxFee) external {
         maxFeePerToken[msg.sender][token] = maxFee;
         emit MaxFeeUpdated(msg.sender, token, maxFee);
+    }
+
+    function setNFTToken(address token) external {
+        subscriptionToken = IERC721(token);
     }
 
     function payFee(ISafeProtocolManager manager, ISafe safe, uint256 nonce) internal {
@@ -83,6 +91,10 @@ contract RelayPlugin is BasePluginWithEventMetadata {
 
     function executeFromPlugin(ISafeProtocolManager manager, ISafe safe, bytes calldata data) external {
         if (trustedOrigin != address(0) && msg.sender != trustedOrigin) revert UntrustedOrigin(msg.sender);
+
+        //check sender has subscription NFT
+        (address sender) = abi.decode(data,(address));
+        if(subscriptionToken.balanceOf(sender) < 1) revert SenderHasNoValidNFTSubscription(sender, address(subscriptionToken));
 
         relayCall(address(safe), data);
         // We use the hash of the tx to relay has a nonce as this is unique
