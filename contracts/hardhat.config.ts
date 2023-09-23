@@ -40,8 +40,6 @@ const deterministicDeployment = (network: string): DeterministicDeploymentInfo =
   };
 };
 
-console.log(NODE_URL);
-console.log(INFURA_KEY);
 if (["goerli", "mumbai"].includes(argv.network) && INFURA_KEY === undefined) {
   throw new Error(`Could not find NODE_URL in env, unable to connect to network ${argv.network}`);
 }
@@ -80,6 +78,10 @@ const config: HardhatUserConfig = {
     gnosis: {
       ...sharedNetworkConfig,
       url: "https://rpc.gnosischain.com",
+    },
+    local: {
+      ...sharedNetworkConfig,
+      url: "http://127.0.0.1:8545/",
     }
   },
   deterministicDeployment,
