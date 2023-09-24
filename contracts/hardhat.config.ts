@@ -65,7 +65,7 @@ const config: HardhatUserConfig = {
     hardhat: {
       allowUnlimitedContractSize: true,
       blockGasLimit: 100000000,
-      gas: 100000000,
+      gas: 10000000,
     },
     goerli: {
       ...sharedNetworkConfig,
@@ -81,6 +81,7 @@ const config: HardhatUserConfig = {
     },
     local: {
       ...sharedNetworkConfig,
+      accounts: ["0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80"],
       url: "http://127.0.0.1:8545/",
     }
   },

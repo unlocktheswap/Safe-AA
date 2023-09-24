@@ -7,7 +7,9 @@ const { ethers } = require('hardhat');
 const deploy: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const { deployments, getNamedAccounts } = hre;
     const { deployer, recoverer } = await getNamedAccounts();
-    console.log(deployer);    
+    const recovererd = "0x70997970C51812dc3A010C7d01b50e0d17dc79C8";
+    console.log("deploy: " + deployer);
+    console.log("recoverer: " + recovererd);
     console.log(await ethers.provider.getBalance(deployer));
     const { deploy } = deployments;
 
@@ -42,7 +44,7 @@ const deploy: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
 
     await deploy("RecoveryWithDelayPlugin", {
         from: deployer,
-        args: [recoverer],
+        args: [recovererd],
         log: true,
         deterministicDeployment: true,
     });
