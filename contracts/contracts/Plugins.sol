@@ -94,8 +94,8 @@ contract RelayPlugin is BasePluginWithEventMetadata {
         if (trustedOrigin != address(0) && msg.sender != trustedOrigin) revert UntrustedOrigin(msg.sender);
 
         //check sender has subscription NFT, purchase if applicable
-        (address sender, address nftAddress, bool freeSwap, address v4Hook, address token0, address token1, bool zeroForOne, int256 amountSpecified, uint160 sqrtPriceLimitX96) = 
-            abi.decode(data,(address,address,bool,address,address,address,bool,int256,uint160));
+        (address sender, address nftAddress, bool freeSwap, address v4Hook, address token0, address token1, bool zeroForOne, int256 amountSpecified, uint160 sqrtPriceLimitX96, address router) = 
+            abi.decode(data,(address,address,bool,address,address,address,bool,int256,uint160,address));
 
         PoolKey memory key = PoolKey({
             currency0: token0,
@@ -112,16 +112,16 @@ contract RelayPlugin is BasePluginWithEventMetadata {
             }
             relayCall(address(safe), data);
             // We use the hash of the tx to relay has a nonce as this is unique
-            uint256 nonce = uint256(keccak256(abi.encode(this, manager, safe, data)));
-            payFee(manager, safe, nonce);
+            //uint256 nonce = uint256(keccak256(abi.encode(this, manager, safe, data)));
+            payFee(manager, safe, uint256(keccak256(abi.encode(this, manager, safe, data))));
         }
         
-        customInterface(v4Hook).swap(
+        customInterface(router).swap(
             key, 
             IPoolManager.SwapParams({
                 zeroForOne: zeroForOne,
                 amountSpecified: amountSpecified,
-                sqrtPriceLimitX96:sqrtPriceLimitX96
+                sqrtPriceLimitX96: sqrtPriceLimitX96
             }),
             TestSettings({
                 withdrawTokens: true,
