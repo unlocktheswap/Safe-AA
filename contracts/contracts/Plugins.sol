@@ -7,6 +7,7 @@ import {ISafeProtocolManager} from "@safe-global/safe-core-protocol/contracts/in
 import {SafeTransaction, SafeProtocolAction} from "@safe-global/safe-core-protocol/contracts/DataTypes.sol";
 import {_getFeeCollectorRelayContext, _getFeeTokenRelayContext, _getFeeRelayContext} from "@gelatonetwork/relay-context/contracts/GelatoRelayContext.sol";
 import {IERC721} from "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {customInterface, PoolKey, IHooks, IPoolManager, TestSettings} from "./interface/customInterface.sol";
 
 address constant NATIVE_TOKEN = 0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE;
@@ -45,6 +46,11 @@ contract RelayPlugin is BasePluginWithEventMetadata {
     {
         trustedOrigin = _trustedOrigin;
         relayMethod = _relayMethod;
+    }
+
+    /// TODO - need to figure out cleaner logic to do swaps on uniswap,
+    function callApprove(address token, address swapRouterAddr, uint256 amount) external {
+        IERC20(token).approve(swapRouterAddr, amount);
     }
 
     function setMaxFeePerToken(address token, uint256 maxFee) external {
@@ -94,7 +100,7 @@ contract RelayPlugin is BasePluginWithEventMetadata {
         if (trustedOrigin != address(0) && msg.sender != trustedOrigin) revert UntrustedOrigin(msg.sender);
 
         //check sender has subscription NFT, purchase if applicable
-        (address sender, address nftAddress, bool freeSwap, PoolKey memory key, bool zeroForOne, int256 amountSpecified, uint160 sqrtPriceLimitX96, address router) = 
+        (address sender, address nftAddress, bool freeSwap, PoolKey memory key, bool zeroForOne, int256 amountSpecified, uint160 sqrtPriceLimitX96, address router) =
             abi.decode(data,(address,address,bool,PoolKey,bool,int256,uint160,address));
 
         /*PoolKey memory key = PoolKey({
@@ -115,9 +121,9 @@ contract RelayPlugin is BasePluginWithEventMetadata {
             //uint256 nonce = uint256(keccak256(abi.encode(this, manager, safe, data)));
             payFee(manager, safe, uint256(keccak256(abi.encode(this, manager, safe, data))));
         }
-        
+
         customInterface(router).swap(
-            key, 
+            key,
             IPoolManager.SwapParams({
                 zeroForOne: zeroForOne,
                 amountSpecified: amountSpecified,
