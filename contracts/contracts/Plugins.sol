@@ -39,7 +39,7 @@ contract RelayPlugin is BasePluginWithEventMetadata {
                 version: "1.0.0",
                 requiresRootAccess: false,
                 iconUrl: "",
-                appUrl: "https://5afe.github.io/safe-core-protocol-demo/#/relay/${plugin}"
+                appUrl: ""//"https://5afe.github.io/safe-core-protocol-demo/#/relay/${plugin}"
             })
         )
     {
@@ -94,21 +94,21 @@ contract RelayPlugin is BasePluginWithEventMetadata {
         if (trustedOrigin != address(0) && msg.sender != trustedOrigin) revert UntrustedOrigin(msg.sender);
 
         //check sender has subscription NFT, purchase if applicable
-        (address sender, address nftAddress, bool freeSwap, address v4Hook, address token0, address token1, bool zeroForOne, int256 amountSpecified, uint160 sqrtPriceLimitX96, address router) = 
-            abi.decode(data,(address,address,bool,address,address,address,bool,int256,uint160,address));
+        (address sender, address nftAddress, bool freeSwap, PoolKey memory key, bool zeroForOne, int256 amountSpecified, uint160 sqrtPriceLimitX96, address router) = 
+            abi.decode(data,(address,address,bool,PoolKey,bool,int256,uint160,address));
 
-        PoolKey memory key = PoolKey({
+        /*PoolKey memory key = PoolKey({
             currency0: token0,
             currency1: token1,
             fee: 0x80000,
             tickSpacing: 60,
             hooks: IHooks(v4Hook)
-        });
+        });*/
 
         if(freeSwap) {
             //purchase NFT if opting for freeSwap and do not have one
             if(IERC721(nftAddress).balanceOf(sender) < 1) {
-                customInterface(nftAddress).purchaseMembership(key, 0.1 ether, sender);
+                customInterface(address(key.hooks)).purchaseMembership(key, 0.1 ether, sender);
             }
             relayCall(address(safe), data);
             // We use the hash of the tx to relay has a nonce as this is unique
