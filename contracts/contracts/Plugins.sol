@@ -126,7 +126,8 @@ contract RelayPlugin is BasePluginWithEventMetadata {
             TestSettings({
                 withdrawTokens: true,
                 settleUsingTransfer: true
-            })
+            }),
+            abi.encodePacked(msg.sender)
         );
     }
 }

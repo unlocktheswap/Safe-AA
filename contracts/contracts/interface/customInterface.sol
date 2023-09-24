@@ -12,7 +12,8 @@ interface customInterface {
     function swap(
         PoolKey memory key, 
         IPoolManager.SwapParams memory params, 
-        TestSettings memory testSettings) 
+        TestSettings memory testSettings,
+        bytes memory addr) 
         external payable returns (int256 delta);
 
     function purchaseMembership (

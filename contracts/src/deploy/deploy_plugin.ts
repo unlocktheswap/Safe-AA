@@ -27,7 +27,7 @@ const deploy: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
     const relayMethod = "0x6a761202"
     // We don't use a trusted origin right now to make it easier to test.
     // For production networks it is strongly recommended to set one to avoid potential fee extraction.
-    const trustedOrigin = ZeroAddress // hre.network.name === "hardhat" ? ZeroAddress : getGelatoAddress(hre.network.name)
+    const trustedOrigin = "0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266" // hre.network.name === "hardhat" ? ZeroAddress : getGelatoAddress(hre.network.name)
     await deploy("RelayPlugin", {
         from: deployer,
         args: [trustedOrigin, relayMethod],
@@ -49,6 +49,12 @@ const deploy: DeployFunction = async function (hre: HardhatRuntimeEnvironment) {
         deterministicDeployment: true,
     });
 
+    await deploy("FixedManager", {
+        from: deployer,
+        args: [],
+        log: true,
+        deterministicDeployment: true,
+    });
 };
 
 deploy.tags = ["plugins"];
